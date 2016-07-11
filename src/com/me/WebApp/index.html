@@ -1,0 +1,190 @@
+
+
+
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<title>TP 2 - EDI III.</title>
+
+	<!-- añadiendo JQuery -->
+	<script src="utilidades/jquery-1.10.1.min.js"></script>
+
+	<!-- añadiendo estilos Bootstrap-->
+	<!-- <link rel="stylesheet" href="utilidades/bootstrap-3.3.5-dist/css/bootstrap.min.css"> -->
+	<link rel="stylesheet" href="utilidades/bootstrap-3.3.5/css/paper-theme.css">
+
+	<!-- añadiendo Bootstrap JS -->
+	<script src="utilidades/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+
+	<!-- estilos y js para animacion de spin -->
+	<link rel="stylesheet" href="utilidades/ladda-bootstrap/dist/ladda-themeless.min.css">
+	<script src="utilidades/ladda-bootstrap/dist/spin.min.js"></script>
+	<script src="utilidades/ladda-bootstrap/dist/ladda.min.js"></script>
+
+	<style type="text/css">
+		body {
+			background : #06274B; /* #373D44; */
+		}
+		label, legend, #resultado, #infoCli {
+			color : #D1D2D2;
+		}
+		#comando, #parametros {
+			color : #D1D2D2;
+		}
+		#form-comandos {
+			padding: 10px;
+			margin: 10px;
+			margin-top: 20px;
+			-webkit-box-shadow: -3px 3px 10px 2px rgba(0, 0, 0, 0.30);
+			-moz-box-shadow: -3px 3px 10px 2px rgba(0, 0, 0, 0.30);
+			box-shadow: -3px 3px 10px 2px rgba(0, 0, 0, 0.30);
+		}
+		#resultado {
+			margin: 10px;
+		}
+		#comando::-webkit-input-placeholder { font-size: 9pt; color: #807171; }
+		#comando::-moz-placeholder { font-size: 9pt; color: #807171; }
+		#comando:-ms-input-placeholder { font-size: 9pt; color: #807171; }
+		#comando:-moz-placeholder { font-size: 9pt; color: #807171; }
+
+		#parametros::-webkit-input-placeholder { font-size: 9pt; color: #807171; }
+		#parametros::-moz-placeholder { font-size: 9pt; color: #807171; }
+		#parametros:-ms-input-placeholder { font-size: 9pt; color: #807171; }
+		#parametros:-moz-placeholder { font-size: 9pt; color: #807171; }
+*/
+	</style>
+
+	<script type="text/javascript">
+		$(document).ready(function() {
+			//alert("documento cargado");
+
+			document.getElementById("comando").addEventListener("focus", focusFunction);
+			document.getElementById("parametros").addEventListener("focus", focusFunction);
+			function focusFunction() {
+				$("#resultado").html("");
+			}
+
+			$("#limpiar").click(function(event) {
+				$("#resultado").html("");
+			});
+
+			$("#btnEnviar").click(function() {
+				//alert("click btnEnviar");
+				var l = Ladda.create(this);
+
+				l.start();
+				$.ajax({
+					type     : "post",
+					url      : "ServletComandos",
+					data     : {comando : $("#comando").val(), parametros : $("#parametros").val()},
+					success  : function(result) {
+						$("#resultado").html('<b>' + result + '</b>');
+						$.post('ServletIdCliente', {}, function(responseText) {
+							$('#infoCli').html('<b>' + responseText + '</b>');
+						});
+					},
+					complete :  function( xhr, status ) {
+						//console.log("complete!");
+						l.stop();
+					}
+				});
+			});
+
+		});
+	</script>
+
+</head>
+<body>
+
+	<div class="container">
+		<form id ="form-comandos" class="form" role="form">
+			<fieldset>
+			<legend>TP 2 - EDI III</legend>
+
+			<div class="form-group">
+				<label for="comando">Comando :</label>
+				<input type="text" class="form-control" id="comando" name="comando"
+					   placeholder="Ingrese el comando" maxlength="30"/>
+			</div>
+
+			<div class="form-group">
+				<label for="parametros">Parametros :</label>
+				<input type="text" class="form-control" id="parametros" name="parametros"
+					   placeholder="Ingrese los parametros separados por ','" maxlength="100" />
+			</div>
+
+			<div class="form-group">
+				<div id="infoCli"></div>
+			</div>
+
+			<button  type="button" id="btnEnviar" class="btn btn-primary btn-sm ladda-button" data-style="zoom-out" data-size="xs">
+			   Ejecutar Comando
+			</button>
+			<button  type="reset" id="limpiar" class="btn btn-success btn-sm" data-size="xs">
+			   Limpiar
+			</button>
+			 <button id = "btn-info" type="button" class="btn btn-default pull-right btn-sm" data-toggle="modal" data-target="#myModal">
+				<span id = "icono-info" class="glyphicon glyphicon-info-sign"></span>
+			</button>
+
+			</fieldset>
+		</form>
+
+		<div id="resultado"></div>
+	</div>
+
+
+	<div id ="myModal" class="modal fade">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">
+								&times;</span></button>
+					<h4 class="modal-title">Info comandos</h4>
+				</div>
+				<div class="modal-body">
+					 <p class="" id="contenido-modal" >
+						<b>conectar.</b> Deberá retornar al cliente que pidió la petición un ID único de
+						conexión. Tener presente que varios clientes podrán realizar peticiones al mismo
+						tiempo. Los clientes deben estar registrados en el servidor en algún lado, si no
+						existe se rechaza la petición. <br>
+
+						<b>estadoServidor (IDCliente).</b> En este caso el Server recibe el comando y el ID del
+						la conexión cliente y debe responder "ACTIVO" si esta el servicio funcionando. <br>
+
+						<b>fechaServidor (IDCliente).</b> En este caso el Server recibe el comando y el ID del
+						cliente y Retornarà la Fecha/Hora del servidor en formato "yyyy/MM/dd HH:mm:ss". <br>
+
+						<b>nroDeSolicitud(IDCliente).</b> Recibe el comando y el ID del Cliente y Retorna el
+						próximo Nro de Solicitud correlativo al ùltimo generado. Para esto el Servicio
+						deberá almacenar en una base de datos los nros de solicitudes generados y el
+						estado de la misma. Al momento de la generación el estado será "iniciada".
+						Luego el cliente podrá modificar el estado pidiendo al Servidor que se actualice la
+						información porque otro cliente puede pedir el estado de la solicitud y deberá
+						responderle con el último estado que posee. Debe dejar una historia de cada
+						solicitud en que estado estuvo y que cliente pidió el cambio de estado. <br>
+
+						<b>cambiarEstadoSolicitud(IDCliente, NroSolicitud, EstadoNuevo).</b> Recibe el comando, el ID del
+						cliente y el Estado nuevo a asignarle. Los estados posibles además del inicial son:
+						"Despachada", "En Solución", "Solucionada" y "Cerrada". El Servidor debe
+						actualizar el estado en la base de datos y responderle al cliente "OK". Si envían
+						un esto que NO existe (ninguno de los anteriores) debe responder con "ERROR"
+						y entre paréntesis el mensaje "Estado: xxxx no contemplado por el servidor".<br>
+
+						<b>consultarEstadoSolicitud(IDCliente, NroSolicitud).</b> Recibe el ID del cliente y el
+						NroSolicitud, retornando el estado actual de la misma <br>
+
+						<b>desconectar(IDCliente).</b> Debe cerrar la sesión con el cliente que pide la
+						desconexión.<br>
+
+					</p> 
+					
+				</div>
+
+			</div><!-- /.modal-content -->
+		</div><!-- /.modal-dialog -->
+	</div><!-- /.modal -->
+
+</body>
+</html>
